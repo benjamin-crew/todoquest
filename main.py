@@ -13,6 +13,11 @@ parser.add_argument('-c',
                     action='store',
                     help='Create a new table.'
                     )
+parser.add_argument('-dt',
+                    '--delete-table',
+                    action='store',
+                    help='Delete a table.'
+                    )
 args = parser.parse_args()
 
 # Functions
@@ -80,7 +85,6 @@ def create_folders():
 def create_sections(list_of_sections, sections_all):
     """Checks if csv files exist for default sections and creates them if not."""
     for section in list_of_sections:
-
         #check if csv exists
         if not os.path.exists(f'sections/{section}.csv'):
             with open(f"sections/{section}.csv", mode="w") as section_csv:
@@ -90,7 +94,7 @@ def create_sections(list_of_sections, sections_all):
         # Add some data if none.
         if os.stat(f"sections/{section}.csv").st_size == 0:
             with open(f"sections/{section}.csv", mode="w") as section_csv:
-                data = ['Add goals', 'In Progress']
+                data = ['1', 'Add goals', 'In Progress']
                 writer = csv.writer(section_csv)
                 writer.writerow(data)
 
@@ -109,14 +113,9 @@ def create_sections(list_of_sections, sections_all):
 
                 progress = format_output(progress)
                 table.add_row([index, goal, progress])
-
-        print(type(table))
-        print(table)
-        sections_all += table
-
-        # for sectiontest in sections_all:
-        #     print(type(sectiontest))
-        #     print(sectiontest)
+                
+        #print(table)
+        sections_all.append(table)
 
     return(sections_all)
 
@@ -133,10 +132,10 @@ if not len(sys.argv) > 1:
     # Print output
     print(ASCIIART)
     for section_table in section_tables:
-        pass
-    # print(section_table)
+        print(section_table)
 else:
-    print(vars(args))
+    #print(args)
+    print(vars(args.c))
 
 ##TODO:
 # Add archiving
