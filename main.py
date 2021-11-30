@@ -1,16 +1,42 @@
+import argparse
 import csv
+import os
+import sys
 from prettytable import PrettyTable
+from art import SEPERATOR, TICK, CROSS
+from classes import Section
 
-ASCIIART = """::::::::::: ::::::::  :::::::::   ::::::::        ::::::::  :::    ::: :::::::::: :::::::: ::::::::::: 
-    :+:    :+:    :+: :+:    :+: :+:    :+:      :+:    :+: :+:    :+: :+:       :+:    :+:    :+:     
-    +:+    +:+    +:+ +:+    +:+ +:+    +:+      +:+    +:+ +:+    +:+ +:+       +:+           +:+     
-    +#+    +#+    +:+ +#+    +:+ +#+    +:+      +#+    +:+ +#+    +:+ +#++:++#  +#++:++#++    +#+     
-    +#+    +#+    +#+ +#+    +#+ +#+    +#+      +#+  # +#+ +#+    +#+ +#+              +#+    +#+     
-    #+#    #+#    #+# #+#    #+# #+#    #+#      #+#   +#+  #+#    #+# #+#       #+#    #+#    #+#     
-    ###     ########  #########   ########        ###### ### ########  ########## ########     ###     """
-SEPERATOR = "-------------------------------------------------------------------------------------------------------"
-TICK = '\u2713'
-CROSS = '\u2717'
+parser = argparse.ArgumentParser(description="Tool to keep track of things to do. By default, the script will show all tables.")
+
+parser.add_argument('-c',
+                    '--create-table',
+                    action='store',
+                    help='Create a new table.'
+                    )
+
+args = parser.parse_args()
+
+def get_sections(csv_file):
+    """Creates/returns the sections.csv file which stores all sections."""
+    if not os.path.exists(csv_file):
+        with open(csv_file, mode="w") as sections_csv:
+            pass
+    
+    # Add default sections
+    if os.stat(csv_file).st_size == 0:
+            with open(csv_file, mode="w") as section_csv:
+                data = ['Dailies', 'Short Term Goals', 'Long Term Goals']
+                writer = csv.writer(section_csv)
+                writer.writerow(data)
+    
+    # Return the sections
+    sections_list = []
+    with open(csv_file, mode="r") as sections_csv:
+        sections = csv.reader(sections_csv, delimiter=',')
+        for section in sections:
+            sections_list += section
+    return(sections_list)
+
 
 def format_output(output):
 
@@ -23,56 +49,72 @@ def format_output(output):
 
     return(output)
 
-def dailies_function():
-    """Test"""
-    dailies_table = PrettyTable()
-    dailies_table.field_names = ["Daily Quest", "Status"]
 
-    with open("/home/benja/development/python/todoquest/quests/dailies.csv") as dailies_csv:
-        data = list(csv.reader(dailies_csv))
-        for line in data:
-            progress = line[1]
-            text = line[0]
-            
-            progress = format_output(progress)
-            dailies_table.add_row([text, progress])
-    
-    print(dailies_table)
+def create_section_folder():
+    """Checks if sections directory exists and creates it if not."""
 
-def challenges():
-    
-    challenges_table = PrettyTable()
-    challenges_table.field_names = ["Challenge", "Status"]
+    user_input = ""
+    if not os.path.exists('sections'):
+        os.makedirs('sections')
 
-    with open("/home/benja/development/python/todoquest/quests/challenges.csv") as challenges_csv:
-        data = list(csv.reader(challenges_csv))
-        for line in data:
-            progress = line[1]
-            text = line[0]
-                        
-            progress = format_output(progress)
-            challenges_table.add_row([text, progress])
+    while os.path.isdir('sections') is False:
+        user_input = input("A file named 'sections' exists. Would you like to delete it in order to create the sections folder? Y/n: ")
+        if user_input.lower() == "y" or user_input.lower() == "":
+            print("Removing sections file.")
+            os.remove('sections')
+            print("Creating sections directory.")
+            os.makedirs('sections')
+        elif user_input.lower() == "n":
+            print("Exitting.")
+            sys.exit()
 
-    print(challenges_table)
 
-def long_goals():
-    
-    long_goals_table = PrettyTable()
-    long_goals_table.field_names = ["Long Goals", "Status"]
-    with open("/home/benja/development/python/todoquest/quests/long_goals.csv") as long_goals_csv:
-        data = list(csv.reader(long_goals_csv))
-        for line in data:
-            progress = line[1]
-            text = line[0]
-                        
-            progress = format_output(progress)
-            long_goals_table.add_row([text, progress])
-    
-    print(long_goals_table)
+def create_sections(list_of__sections, sections_all):
+    """Checks if csv files exist for default sections and creates them if not."""
+    for section in list_of__sections:
+        #check if csv exists
+        if not os.path.exists(f'sections/{section}.csv'):
+            with open(f"sections/{section}.csv", mode="w") as section_csv:
+                pass
 
-print(SEPERATOR)
-print(ASCIIART)
-print(SEPERATOR)
-dailies_function()
-challenges()
-long_goals()
+        # Check to see if there is any data in the csv file.
+        # Add some data if none.
+        if os.stat(f"sections/{section}.csv").st_size == 0:
+            with open(f"sections/{section}.csv", mode="w") as section_csv:
+                data = ['Add goals', 'In Progress']
+                writer = csv.writer(section_csv)
+                writer.writerow(data)
+
+        # Create table and return it to sections
+        table = PrettyTable()
+        table.field_names = [f"{section}", "Status"]
+
+        with open(f"sections/{section}.csv") as section_csv:
+            data = list(csv.reader(section_csv))
+
+            for line in data:
+                goal = line[0]
+                progress = line[1]
+
+                progress = format_output(progress)
+                table.add_row([goal, progress])
+
+        sections_all += table
+
+    return(sections_all)
+
+# Variables
+SECTIONS_CSV = "sections.csv"
+sections = get_sections(SECTIONS_CSV)
+section_tables = []
+
+
+# Actions
+if not len(sys.argv) > 1:
+    create_section_folder()
+    create_sections(sections, section_tables)
+
+    for section_table in section_tables:
+        print(section_table)
+else:
+    print(vars(args))
